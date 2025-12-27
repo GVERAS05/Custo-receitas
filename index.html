@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -35,11 +35,13 @@
   <h3>Total: R$ <span id="total">0.00</span></h3>
 
   <!-- AÇÕES -->
-  <button onclick="salvarReceita()">💾 Salvar Receita</button>
+  <button type="button" onclick="salvarReceita()">💾 Salvar Receita</button>
 
   <!-- RECEITAS SALVAS -->
-  <h2>Receitas Salvas</h2>
-  <ul id="lista-receitas"></ul>
+  <div id="receitas-salvas">
+    <h2>Receitas Salvas</h2>
+    <ul id="lista-receitas"></ul>
+  </div>
 
   <!-- SCRIPT -->
   <script src="script.js"></script>
