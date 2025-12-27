@@ -1,1 +1,142 @@
+/* Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
+/* Corpo */
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: linear-gradient(135deg, #eef2f7, #f8fafc);
+  color: #2c2c2c;
+  padding: 30px;
+}
+
+/* Título principal */
+h1 {
+  color: #1f3a5f;
+  margin-bottom: 30px;
+}
+
+/* Container dos cards */
+.cards {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+/* Card */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e4e8ee;
+}
+
+/* Card maior */
+.card-grande {
+  min-height: 300px;
+}
+
+/* Títulos dos cards */
+.card h2 {
+  margin-bottom: 15px;
+  color: #1f3a5f;
+}
+
+/* Campo de busca */
+#busca {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccd3dd;
+  border-radius: 6px;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+/* Lista de ingredientes */
+#lista-ingredientes {
+  list-style: none;
+  max-height: 350px;
+  overflow-y: auto;
+  border: 1px solid #e1e6ef;
+  border-radius: 6px;
+}
+
+#lista-ingredientes li {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f2f6;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+#lista-ingredientes li:hover {
+  background: #e9f1ff;
+  color: #0b5ed7;
+}
+
+/* Tabela */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+/* Cabeçalho da tabela */
+th {
+  background: #1f3a5f;
+  color: #ffffff;
+  padding: 12px;
+  text-align: left;
+  font-weight: 500;
+}
+
+/* Células */
+td {
+  padding: 10px;
+  border-bottom: 1px solid #eef1f5;
+}
+
+/* Inputs da tabela */
+td input {
+  width: 90px;
+  padding: 6px;
+  border: 1px solid #ccd3dd;
+  border-radius: 4px;
+}
+
+/* Botão remover */
+button {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #b02a37;
+}
+
+/* Total */
+h3 {
+  margin-top: 20px;
+  color: #0b5ed7;
+}
+
+#total {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
