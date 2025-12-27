@@ -4,10 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let receita = [];
   let ingredientesNaReceita = new Set();
 
-  // Unidades
   const unidades = ["kg", "g", "litro", "ml", "unidade"];
 
-  // ===== MEMÓRIA DE PREÇOS =====
+  // ===== PREÇOS =====
   function carregarPrecosSalvos() {
     return JSON.parse(localStorage.getItem("precosIngredientes")) || {};
   }
@@ -18,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let precosSalvos = carregarPrecosSalvos();
 
-  // ===== MEMÓRIA DE RECEITAS =====
+  // ===== RECEITAS =====
   function carregarReceitas() {
     return JSON.parse(localStorage.getItem("receitasSalvas")) || [];
   }
@@ -34,28 +33,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalSpan = document.getElementById("total");
   const listaReceitas = document.getElementById("lista-receitas");
 
+  // ===== MOSTRAR RECEITAS AO ABRIR =====
+  renderReceitas();
+
   // ===== CARREGAR INGREDIENTES =====
   fetch("ingredientes.json")
-    .then(res => {
-      if (!res.ok) throw new Error("Erro ao carregar ingredientes");
-      return res.json();
-    })
+    .then(res => res.json())
     .then(dados => {
       ingredientes = dados;
       renderIngredientes();
-    })
-    .catch(err => {
-      console.warn("Ingredientes não carregados:", err);
-      ingredientes = [];
-    })
-    .finally(() => {
-      renderReceitas(); // 🔥 GARANTIDO
     });
 
   // ===== BUSCA =====
   campoBusca.addEventListener("input", renderIngredientes);
 
-  // ===== LISTAR INGREDIENTES =====
   function renderIngredientes() {
     const filtro = campoBusca.value.toLowerCase();
     listaIngredientes.innerHTML = "";
@@ -77,7 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== ADICIONAR INGREDIENTE =====
   function adicionarIngrediente(item) {
     if (ingredientesNaReceita.has(item.nome)) return;
 
@@ -94,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIngredientes();
   }
 
-  // ===== ATUALIZAR TABELA =====
   function atualizarTabela() {
     tabelaReceita.innerHTML = "";
     let total = 0;
@@ -108,17 +97,17 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${item.nome}</td>
 
         <td>
-          <input type="number" step="0.01" min="0" value="${item.preco}"
+          <input type="number" step="0.01" value="${item.preco}"
             onchange="
               receita[${index}].preco = Number(this.value);
               precosSalvos['${item.nome}'] = Number(this.value);
-              salvarPrecos(precosSalvos);
+              localStorage.setItem('precosIngredientes', JSON.stringify(precosSalvos));
               atualizarTabela();
             ">
         </td>
 
         <td>
-          <input type="number" step="0.01" min="0" value="${item.quantidade}"
+          <input type="number" step="0.01" value="${item.quantidade}"
             onchange="
               receita[${index}].quantidade = Number(this.value);
               atualizarTabela();
@@ -143,7 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
     totalSpan.textContent = total.toFixed(2);
   }
 
-  // ===== REMOVER INGREDIENTE =====
   window.removerIngrediente = function (index) {
     ingredientesNaReceita.delete(receita[index].nome);
     receita.splice(index, 1);
@@ -151,7 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIngredientes();
   };
 
-  // ===== SALVAR RECEITA =====
   window.salvarReceita = function () {
     if (receita.length === 0) {
       alert("A receita está vazia.");
@@ -171,16 +158,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     salvarReceitas(receitas);
     renderReceitas();
-    alert("Receita salva com sucesso!");
+    alert("Receita salva!");
   };
 
-  // ===== LISTAR RECEITAS =====
   function renderReceitas() {
     listaReceitas.innerHTML = "";
     const receitas = carregarReceitas();
 
     if (receitas.length === 0) {
-      listaReceitas.innerHTML = "<li>Nenhuma receita salva ainda.</li>";
+      listaReceitas.innerHTML = "<li>Nenhuma receita salva.</li>";
       return;
     }
 
@@ -195,7 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== ABRIR RECEITA =====
   window.abrirReceita = function (index) {
     const receitas = carregarReceitas();
     const r = receitas[index];
@@ -212,7 +197,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIngredientes();
   };
 
-  // ===== EXCLUIR RECEITA =====
   window.excluirReceita = function (index) {
     const receitas = carregarReceitas();
     receitas.splice(index, 1);
