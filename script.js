@@ -1,57 +1,68 @@
 let ingredientes = [];
 let receita = [];
 
-// Carrega os ingredientes do arquivo JSON
+// Unidades disponíveis
+const unidades = ["kg", "g", "litro", "ml", "unidade"];
+
+// ====== MEMÓRIA (localStorage) ======
+function carregarPrecosSalvos() {
+  return JSON.parse(localStorage.getItem("precosIngredientes")) || {};
+}
+
+function salvarPrecos(precos) {
+  localStorage.setItem("precosIngredientes", JSON.stringify(precos));
+}
+
+let precosSalvos = carregarPrecosSalvos();
+
+// ====== CARREGAR INGREDIENTES ======
 fetch("ingredientes.json")
-  .then(resposta => resposta.json())
+  .then(res => res.json())
   .then(dados => {
     ingredientes = dados;
     mostrarIngredientes(ingredientes);
   });
 
-// Elementos da tela
+// ====== ELEMENTOS ======
 const campoBusca = document.getElementById("busca");
 const listaIngredientes = document.getElementById("lista-ingredientes");
 const tabelaReceita = document.getElementById("receita");
 const totalSpan = document.getElementById("total");
 
-// Filtro de busca
+// ====== BUSCA ======
 campoBusca.addEventListener("input", () => {
   const texto = campoBusca.value.toLowerCase();
-
-  const filtrados = ingredientes.filter(item =>
-    item.nome.toLowerCase().includes(texto)
+  const filtrados = ingredientes.filter(i =>
+    i.nome.toLowerCase().includes(texto)
   );
-
   mostrarIngredientes(filtrados);
 });
 
-// Mostra ingredientes encontrados
+// ====== LISTA INGREDIENTES ======
 function mostrarIngredientes(lista) {
   listaIngredientes.innerHTML = "";
 
   lista.forEach(item => {
     const li = document.createElement("li");
     li.textContent = item.nome;
-
     li.onclick = () => adicionarIngrediente(item);
-
     listaIngredientes.appendChild(li);
   });
 }
 
-// Adiciona ingrediente à receita
+// ====== ADICIONAR INGREDIENTE ======
 function adicionarIngrediente(item) {
   receita.push({
     nome: item.nome,
-    preco: 0,
-    quantidade: 0
+    preco: precosSalvos[item.nome] || 0,
+    quantidade: 0,
+    unidade: "kg"
   });
 
   atualizarTabela();
 }
 
-// Atualiza a tabela da receita
+// ====== ATUALIZAR TABELA ======
 function atualizarTabela() {
   tabelaReceita.innerHTML = "";
   let total = 0;
@@ -60,21 +71,43 @@ function atualizarTabela() {
     const custo = item.preco * item.quantidade;
     total += custo;
 
+    const opcoesUnidade = unidades
+      .map(u => `<option value="${u}" ${u === item.unidade ? "selected" : ""}>${u}</option>`)
+      .join("");
+
     const linha = document.createElement("tr");
 
     linha.innerHTML = `
       <td>${item.nome}</td>
+
       <td>
-        <input type="number" min="0" step="0.01"
+        <input type="number" step="0.01" min="0"
           value="${item.preco}"
-          onchange="receita[${index}].preco = this.value; atualizarTabela()">
+          onchange="
+            receita[${index}].preco = this.value;
+            precosSalvos['${item.nome}'] = this.value;
+            salvarPrecos(precosSalvos);
+            atualizarTabela();
+          ">
       </td>
+
       <td>
-        <input type="number" min="0" step="0.01"
+        <input type="number" step="0.01" min="0"
           value="${item.quantidade}"
-          onchange="receita[${index}].quantidade = this.value; atualizarTabela()">
+          onchange="
+            receita[${index}].quantidade = this.value;
+            atualizarTabela();
+          ">
       </td>
+
+      <td>
+        <select onchange="receita[${index}].unidade = this.value">
+          ${opcoesUnidade}
+        </select>
+      </td>
+
       <td>R$ ${custo.toFixed(2)}</td>
+
       <td>
         <button onclick="removerIngrediente(${index})">❌</button>
       </td>
@@ -86,7 +119,7 @@ function atualizarTabela() {
   totalSpan.textContent = total.toFixed(2);
 }
 
-// Remove ingrediente da receita
+// ====== REMOVER ======
 function removerIngrediente(index) {
   receita.splice(index, 1);
   atualizarTabela();
