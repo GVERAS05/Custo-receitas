@@ -4,7 +4,7 @@ let receita = [];
 // Unidades disponíveis
 const unidades = ["kg", "g", "litro", "ml", "unidade"];
 
-// ===== MEMÓRIA (localStorage) =====
+// ===== MEMÓRIA DE PREÇOS =====
 function carregarPrecosSalvos() {
   return JSON.parse(localStorage.getItem("precosIngredientes")) || {};
 }
@@ -20,7 +20,7 @@ fetch("ingredientes.json")
   .then(res => res.json())
   .then(dados => {
     ingredientes = dados;
-    mostrarIngredientes(ingredientes);
+    mostrarIngredientes();
   });
 
 // ===== ELEMENTOS =====
@@ -30,34 +30,35 @@ const tabelaReceita = document.getElementById("receita");
 const totalSpan = document.getElementById("total");
 
 // ===== BUSCA =====
-campoBusca.addEventListener("input", () => {
-  const texto = campoBusca.value.toLowerCase();
-  const filtrados = ingredientes.filter(i =>
-    i.nome.toLowerCase().includes(texto)
-  );
-  mostrarIngredientes(filtrados);
-});
+campoBusca.addEventListener("input", mostrarIngredientes);
 
-// ===== LISTAR INGREDIENTES =====
-function mostrarIngredientes(lista) {
+// ===== MOSTRAR INGREDIENTES (COM BLOQUEIO) =====
+function mostrarIngredientes() {
+  const texto = campoBusca.value.toLowerCase();
   listaIngredientes.innerHTML = "";
 
-  lista.forEach(item => {
+  ingredientes.forEach(item => {
+    if (!item.nome.toLowerCase().includes(texto)) return;
+
+    const jaUsado = receita.some(r => r.nome === item.nome);
+
     const li = document.createElement("li");
     li.textContent = item.nome;
-    li.onclick = () => adicionarIngrediente(item);
+
+    if (jaUsado) {
+      li.style.opacity = "0.4";
+      li.style.cursor = "not-allowed";
+    } else {
+      li.onclick = () => adicionarIngrediente(item);
+    }
+
     listaIngredientes.appendChild(li);
   });
 }
 
-// ===== ADICIONAR INGREDIENTE (SEM DUPLICAR) =====
+// ===== ADICIONAR INGREDIENTE (IMPOSSÍVEL DUPLICAR) =====
 function adicionarIngrediente(item) {
-  const jaExiste = receita.find(i => i.nome === item.nome);
-
-  if (jaExiste) {
-    alert("Esse ingrediente já foi adicionado à receita.");
-    return;
-  }
+  if (receita.some(r => r.nome === item.nome)) return;
 
   receita.push({
     nome: item.nome,
@@ -67,6 +68,7 @@ function adicionarIngrediente(item) {
   });
 
   atualizarTabela();
+  mostrarIngredientes();
 }
 
 // ===== ATUALIZAR TABELA =====
@@ -82,9 +84,9 @@ function atualizarTabela() {
       .map(u => `<option value="${u}" ${u === item.unidade ? "selected" : ""}>${u}</option>`)
       .join("");
 
-    const linha = document.createElement("tr");
+    const tr = document.createElement("tr");
 
-    linha.innerHTML = `
+    tr.innerHTML = `
       <td>${item.nome}</td>
 
       <td>
@@ -120,7 +122,7 @@ function atualizarTabela() {
       </td>
     `;
 
-    tabelaReceita.appendChild(linha);
+    tabelaReceita.appendChild(tr);
   });
 
   totalSpan.textContent = total.toFixed(2);
@@ -130,4 +132,5 @@ function atualizarTabela() {
 function removerIngrediente(index) {
   receita.splice(index, 1);
   atualizarTabela();
+  mostrarIngredientes();
 }
