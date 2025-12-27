@@ -9,17 +9,22 @@
 
   <h1>Cálculo de Custo de Receitas</h1>
 
+  <!-- BUSCA -->
   <input type="text" id="busca" placeholder="Pesquisar ingrediente">
 
+  <!-- LISTA DE INGREDIENTES -->
   <ul id="lista-ingredientes"></ul>
 
+  <!-- RECEITA ATUAL -->
   <h2>Receita</h2>
+
   <table>
     <thead>
       <tr>
         <th>Ingrediente</th>
         <th>Preço</th>
         <th>Quantidade</th>
+        <th>Unidade</th>
         <th>Custo</th>
         <th>Ação</th>
       </tr>
@@ -29,6 +34,15 @@
 
   <h3>Total: R$ <span id="total">0.00</span></h3>
 
+  <!-- AÇÕES -->
+  <button onclick="salvarReceita()">💾 Salvar Receita</button>
+
+  <!-- RECEITAS SALVAS -->
+  <h2>Receitas Salvas</h2>
+  <ul id="lista-receitas"></ul>
+
+  <!-- SCRIPT -->
   <script src="script.js"></script>
+
 </body>
 </html>
