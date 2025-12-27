@@ -4,7 +4,7 @@ let receita = [];
 // Unidades disponíveis
 const unidades = ["kg", "g", "litro", "ml", "unidade"];
 
-// ====== MEMÓRIA (localStorage) ======
+// ===== MEMÓRIA (localStorage) =====
 function carregarPrecosSalvos() {
   return JSON.parse(localStorage.getItem("precosIngredientes")) || {};
 }
@@ -15,7 +15,7 @@ function salvarPrecos(precos) {
 
 let precosSalvos = carregarPrecosSalvos();
 
-// ====== CARREGAR INGREDIENTES ======
+// ===== CARREGAR INGREDIENTES =====
 fetch("ingredientes.json")
   .then(res => res.json())
   .then(dados => {
@@ -23,13 +23,13 @@ fetch("ingredientes.json")
     mostrarIngredientes(ingredientes);
   });
 
-// ====== ELEMENTOS ======
+// ===== ELEMENTOS =====
 const campoBusca = document.getElementById("busca");
 const listaIngredientes = document.getElementById("lista-ingredientes");
 const tabelaReceita = document.getElementById("receita");
 const totalSpan = document.getElementById("total");
 
-// ====== BUSCA ======
+// ===== BUSCA =====
 campoBusca.addEventListener("input", () => {
   const texto = campoBusca.value.toLowerCase();
   const filtrados = ingredientes.filter(i =>
@@ -38,7 +38,7 @@ campoBusca.addEventListener("input", () => {
   mostrarIngredientes(filtrados);
 });
 
-// ====== LISTA INGREDIENTES ======
+// ===== LISTAR INGREDIENTES =====
 function mostrarIngredientes(lista) {
   listaIngredientes.innerHTML = "";
 
@@ -50,8 +50,15 @@ function mostrarIngredientes(lista) {
   });
 }
 
-// ====== ADICIONAR INGREDIENTE ======
+// ===== ADICIONAR INGREDIENTE (SEM DUPLICAR) =====
 function adicionarIngrediente(item) {
+  const jaExiste = receita.find(i => i.nome === item.nome);
+
+  if (jaExiste) {
+    alert("Esse ingrediente já foi adicionado à receita.");
+    return;
+  }
+
   receita.push({
     nome: item.nome,
     preco: precosSalvos[item.nome] || 0,
@@ -62,7 +69,7 @@ function adicionarIngrediente(item) {
   atualizarTabela();
 }
 
-// ====== ATUALIZAR TABELA ======
+// ===== ATUALIZAR TABELA =====
 function atualizarTabela() {
   tabelaReceita.innerHTML = "";
   let total = 0;
@@ -81,7 +88,7 @@ function atualizarTabela() {
       <td>${item.nome}</td>
 
       <td>
-        <input type="number" step="0.01" min="0"
+        <input type="number" min="0" step="0.01"
           value="${item.preco}"
           onchange="
             receita[${index}].preco = this.value;
@@ -92,7 +99,7 @@ function atualizarTabela() {
       </td>
 
       <td>
-        <input type="number" step="0.01" min="0"
+        <input type="number" min="0" step="0.01"
           value="${item.quantidade}"
           onchange="
             receita[${index}].quantidade = this.value;
@@ -119,7 +126,7 @@ function atualizarTabela() {
   totalSpan.textContent = total.toFixed(2);
 }
 
-// ====== REMOVER ======
+// ===== REMOVER INGREDIENTE =====
 function removerIngrediente(index) {
   receita.splice(index, 1);
   atualizarTabela();
