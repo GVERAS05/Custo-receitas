@@ -36,11 +36,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== CARREGAR INGREDIENTES =====
   fetch("ingredientes.json")
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error("Erro ao carregar ingredientes");
+      return res.json();
+    })
     .then(dados => {
       ingredientes = dados;
       renderIngredientes();
-      renderReceitas();
+    })
+    .catch(err => {
+      console.warn("Ingredientes não carregados:", err);
+      ingredientes = [];
+    })
+    .finally(() => {
+      renderReceitas(); // 🔥 GARANTIDO
     });
 
   // ===== BUSCA =====
@@ -155,14 +164,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const receitas = carregarReceitas();
 
     receitas.push({
-      nome: nome,
+      nome,
       itens: JSON.parse(JSON.stringify(receita)),
       total: totalSpan.textContent
     });
 
     salvarReceitas(receitas);
     renderReceitas();
-
     alert("Receita salva com sucesso!");
   };
 
