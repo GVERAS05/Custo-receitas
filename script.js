@@ -1,7 +1,5 @@
 let ingredientes = [];
 let receita = [];
-
-// BLOQUEIO ABSOLUTO DE DUPLICAÇÃO
 let ingredientesNaReceita = new Set();
 
 // Unidades
@@ -11,18 +9,25 @@ const unidades = ["kg", "g", "litro", "ml", "unidade"];
 function carregarPrecosSalvos() {
   return JSON.parse(localStorage.getItem("precosIngredientes")) || {};
 }
-
 function salvarPrecos(precos) {
   localStorage.setItem("precosIngredientes", JSON.stringify(precos));
 }
-
 let precosSalvos = carregarPrecosSalvos();
+
+// ===== MEMÓRIA DE RECEITAS =====
+function carregarReceitas() {
+  return JSON.parse(localStorage.getItem("receitasSalvas")) || [];
+}
+function salvarReceitas(lista) {
+  localStorage.setItem("receitasSalvas", JSON.stringify(lista));
+}
 
 // ===== ELEMENTOS =====
 const campoBusca = document.getElementById("busca");
 const listaIngredientes = document.getElementById("lista-ingredientes");
 const tabelaReceita = document.getElementById("receita");
 const totalSpan = document.getElementById("total");
+const listaReceitas = document.getElementById("lista-receitas");
 
 // ===== CARREGAR INGREDIENTES =====
 fetch("ingredientes.json")
@@ -30,12 +35,13 @@ fetch("ingredientes.json")
   .then(dados => {
     ingredientes = dados;
     renderIngredientes();
+    renderReceitas();
   });
 
 // ===== BUSCA =====
 campoBusca.addEventListener("input", renderIngredientes);
 
-// ===== RENDER INGREDIENTES =====
+// ===== INGREDIENTES =====
 function renderIngredientes() {
   const filtro = campoBusca.value.toLowerCase();
   listaIngredientes.innerHTML = "";
@@ -50,14 +56,14 @@ function renderIngredientes() {
       li.style.opacity = "0.4";
       li.style.pointerEvents = "none";
     } else {
-      li.addEventListener("click", () => adicionarIngrediente(item));
+      li.onclick = () => adicionarIngrediente(item);
     }
 
     listaIngredientes.appendChild(li);
   });
 }
 
-// ===== ADICIONAR INGREDIENTE (IMPOSSÍVEL DUPLICAR) =====
+// ===== ADICIONAR INGREDIENTE =====
 function adicionarIngrediente(item) {
   if (ingredientesNaReceita.has(item.nome)) return;
 
@@ -74,7 +80,7 @@ function adicionarIngrediente(item) {
   renderIngredientes();
 }
 
-// ===== ATUALIZAR TABELA =====
+// ===== TABELA =====
 function atualizarTabela() {
   tabelaReceita.innerHTML = "";
   let total = 0;
@@ -117,7 +123,6 @@ function atualizarTabela() {
         <button onclick="removerIngrediente(${index})">❌</button>
       </td>
     `;
-
     tabelaReceita.appendChild(tr);
   });
 
@@ -130,4 +135,63 @@ function removerIngrediente(index) {
   receita.splice(index, 1);
   atualizarTabela();
   renderIngredientes();
+}
+
+// ===== SALVAR RECEITA =====
+function salvarReceita() {
+  const nome = prompt("Nome da receita:");
+  if (!nome) return;
+
+  const receitas = carregarReceitas();
+
+  receitas.push({
+    nome,
+    itens: receita,
+    total: totalSpan.textContent
+  });
+
+  salvarReceitas(receitas);
+  alert("Receita salva com sucesso!");
+  renderReceitas();
+}
+
+// ===== LISTAR RECEITAS =====
+function renderReceitas() {
+  listaReceitas.innerHTML = "";
+  const receitas = carregarReceitas();
+
+  receitas.forEach((r, index) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      ${r.nome} — R$ ${r.total}
+      <button onclick="abrirReceita(${index})">Abrir</button>
+      <button onclick="excluirReceita(${index})">❌</button>
+    `;
+    listaReceitas.appendChild(li);
+  });
+}
+
+// ===== ABRIR RECEITA =====
+function abrirReceita(index) {
+  const receitas = carregarReceitas();
+  const r = receitas[index];
+
+  receita = [];
+  ingredientesNaReceita.clear();
+
+  r.itens.forEach(item => {
+    ingredientesNaReceita.add(item.nome);
+    receita.push(item);
+  });
+
+  atualizarTabela();
+  renderIngredientes();
+}
+
+// ===== EXCLUIR RECEITA =====
+function excluirReceita(index) {
+  const receitas = carregarReceitas();
+  receitas.splice(index, 1);
+  salvarReceitas(receitas);
+  renderReceitas();
 }
