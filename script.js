@@ -96,8 +96,8 @@ function atualizarTabela() {
       <td>
         <input type="number" step="0.01" min="0" value="${item.preco}"
           onchange="
-            receita[${index}].preco = this.value;
-            precosSalvos['${item.nome}'] = this.value;
+            receita[${index}].preco = Number(this.value);
+            precosSalvos['${item.nome}'] = Number(this.value);
             salvarPrecos(precosSalvos);
             atualizarTabela();
           ">
@@ -106,7 +106,7 @@ function atualizarTabela() {
       <td>
         <input type="number" step="0.01" min="0" value="${item.quantidade}"
           onchange="
-            receita[${index}].quantidade = this.value;
+            receita[${index}].quantidade = Number(this.value);
             atualizarTabela();
           ">
       </td>
@@ -139,20 +139,25 @@ function removerIngrediente(index) {
 
 // ===== SALVAR RECEITA =====
 function salvarReceita() {
+  if (receita.length === 0) {
+    alert("A receita está vazia.");
+    return;
+  }
+
   const nome = prompt("Nome da receita:");
   if (!nome) return;
 
   const receitas = carregarReceitas();
 
   receitas.push({
-    nome,
-    itens: receita,
+    nome: nome,
+    itens: JSON.parse(JSON.stringify(receita)), // CLONE
     total: totalSpan.textContent
   });
 
   salvarReceitas(receitas);
-  alert("Receita salva com sucesso!");
   renderReceitas();
+  alert("Receita salva com sucesso!");
 }
 
 // ===== LISTAR RECEITAS =====
@@ -160,10 +165,15 @@ function renderReceitas() {
   listaReceitas.innerHTML = "";
   const receitas = carregarReceitas();
 
+  if (receitas.length === 0) {
+    listaReceitas.innerHTML = "<li>Nenhuma receita salva ainda.</li>";
+    return;
+  }
+
   receitas.forEach((r, index) => {
     const li = document.createElement("li");
     li.innerHTML = `
-      ${r.nome} — R$ ${r.total}
+      <strong>${r.nome}</strong> — R$ ${r.total}
       <button onclick="abrirReceita(${index})">Abrir</button>
       <button onclick="excluirReceita(${index})">❌</button>
     `;
