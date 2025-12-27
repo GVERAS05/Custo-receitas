@@ -1,7 +1,10 @@
 let ingredientes = [];
 let receita = [];
 
-// Unidades disponíveis
+// BLOQUEIO ABSOLUTO DE DUPLICAÇÃO
+let ingredientesNaReceita = new Set();
+
+// Unidades
 const unidades = ["kg", "g", "litro", "ml", "unidade"];
 
 // ===== MEMÓRIA DE PREÇOS =====
@@ -15,41 +18,39 @@ function salvarPrecos(precos) {
 
 let precosSalvos = carregarPrecosSalvos();
 
-// ===== CARREGAR INGREDIENTES =====
-fetch("ingredientes.json")
-  .then(res => res.json())
-  .then(dados => {
-    ingredientes = dados;
-    mostrarIngredientes();
-  });
-
 // ===== ELEMENTOS =====
 const campoBusca = document.getElementById("busca");
 const listaIngredientes = document.getElementById("lista-ingredientes");
 const tabelaReceita = document.getElementById("receita");
 const totalSpan = document.getElementById("total");
 
-// ===== BUSCA =====
-campoBusca.addEventListener("input", mostrarIngredientes);
+// ===== CARREGAR INGREDIENTES =====
+fetch("ingredientes.json")
+  .then(res => res.json())
+  .then(dados => {
+    ingredientes = dados;
+    renderIngredientes();
+  });
 
-// ===== MOSTRAR INGREDIENTES (COM BLOQUEIO) =====
-function mostrarIngredientes() {
-  const texto = campoBusca.value.toLowerCase();
+// ===== BUSCA =====
+campoBusca.addEventListener("input", renderIngredientes);
+
+// ===== RENDER INGREDIENTES =====
+function renderIngredientes() {
+  const filtro = campoBusca.value.toLowerCase();
   listaIngredientes.innerHTML = "";
 
   ingredientes.forEach(item => {
-    if (!item.nome.toLowerCase().includes(texto)) return;
-
-    const jaUsado = receita.some(r => r.nome === item.nome);
+    if (!item.nome.toLowerCase().includes(filtro)) return;
 
     const li = document.createElement("li");
     li.textContent = item.nome;
 
-    if (jaUsado) {
+    if (ingredientesNaReceita.has(item.nome)) {
       li.style.opacity = "0.4";
-      li.style.cursor = "not-allowed";
+      li.style.pointerEvents = "none";
     } else {
-      li.onclick = () => adicionarIngrediente(item);
+      li.addEventListener("click", () => adicionarIngrediente(item));
     }
 
     listaIngredientes.appendChild(li);
@@ -58,7 +59,9 @@ function mostrarIngredientes() {
 
 // ===== ADICIONAR INGREDIENTE (IMPOSSÍVEL DUPLICAR) =====
 function adicionarIngrediente(item) {
-  if (receita.some(r => r.nome === item.nome)) return;
+  if (ingredientesNaReceita.has(item.nome)) return;
+
+  ingredientesNaReceita.add(item.nome);
 
   receita.push({
     nome: item.nome,
@@ -68,7 +71,7 @@ function adicionarIngrediente(item) {
   });
 
   atualizarTabela();
-  mostrarIngredientes();
+  renderIngredientes();
 }
 
 // ===== ATUALIZAR TABELA =====
@@ -80,18 +83,12 @@ function atualizarTabela() {
     const custo = item.preco * item.quantidade;
     total += custo;
 
-    const opcoesUnidade = unidades
-      .map(u => `<option value="${u}" ${u === item.unidade ? "selected" : ""}>${u}</option>`)
-      .join("");
-
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td>${item.nome}</td>
 
       <td>
-        <input type="number" min="0" step="0.01"
-          value="${item.preco}"
+        <input type="number" step="0.01" min="0" value="${item.preco}"
           onchange="
             receita[${index}].preco = this.value;
             precosSalvos['${item.nome}'] = this.value;
@@ -101,8 +98,7 @@ function atualizarTabela() {
       </td>
 
       <td>
-        <input type="number" min="0" step="0.01"
-          value="${item.quantidade}"
+        <input type="number" step="0.01" min="0" value="${item.quantidade}"
           onchange="
             receita[${index}].quantidade = this.value;
             atualizarTabela();
@@ -111,7 +107,7 @@ function atualizarTabela() {
 
       <td>
         <select onchange="receita[${index}].unidade = this.value">
-          ${opcoesUnidade}
+          ${unidades.map(u => `<option ${u === item.unidade ? "selected" : ""}>${u}</option>`).join("")}
         </select>
       </td>
 
@@ -130,7 +126,8 @@ function atualizarTabela() {
 
 // ===== REMOVER INGREDIENTE =====
 function removerIngrediente(index) {
+  ingredientesNaReceita.delete(receita[index].nome);
   receita.splice(index, 1);
   atualizarTabela();
-  mostrarIngredientes();
+  renderIngredientes();
 }
