@@ -6,14 +6,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const unidades = ["kg", "g", "litro", "ml", "unidade"];
 
-  const campoBusca = document.getElementById("busca");
-  const listaIngredientes = document.getElementById("lista-ingredientes");
-  const tabelaReceita = document.getElementById("receita");
-  const totalSpan = document.getElementById("total");
-  const listaReceitas = document.getElementById("lista-receitas");
+  // ===== PREÇOS SALVOS =====
+  function carregarPrecosSalvos() {
+    return JSON.parse(localStorage.getItem("precosIngredientes")) || {};
+  }
 
-  // ================= LOCAL STORAGE =================
+  function salvarPrecos(precos) {
+    localStorage.setItem("precosIngredientes", JSON.stringify(precos));
+  }
 
+  let precosSalvos = carregarPrecosSalvos();
+
+  // ===== RECEITAS SALVAS =====
   function carregarReceitas() {
     return JSON.parse(localStorage.getItem("receitasSalvas")) || [];
   }
@@ -22,8 +26,14 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("receitasSalvas", JSON.stringify(lista));
   }
 
-  // ================= INGREDIENTES =================
+  // ===== ELEMENTOS =====
+  const campoBusca = document.getElementById("busca");
+  const listaIngredientes = document.getElementById("lista-ingredientes");
+  const tabelaReceita = document.getElementById("receita");
+  const totalSpan = document.getElementById("total");
+  const listaReceitas = document.getElementById("lista-receitas");
 
+  // ===== CARREGAR INGREDIENTES =====
   fetch("ingredientes.json")
     .then(res => res.json())
     .then(dados => {
@@ -34,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   campoBusca.addEventListener("input", renderIngredientes);
 
+  // ===== LISTAR INGREDIENTES =====
   function renderIngredientes() {
     const filtro = campoBusca.value.toLowerCase();
     listaIngredientes.innerHTML = "";
@@ -46,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (ingredientesNaReceita.has(item.nome)) {
         li.style.opacity = "0.4";
+        li.style.pointerEvents = "none";
       } else {
         li.onclick = () => adicionarIngrediente(item);
       }
@@ -54,12 +66,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ===== ADICIONAR =====
   function adicionarIngrediente(item) {
+    if (ingredientesNaReceita.has(item.nome)) return;
+
     ingredientesNaReceita.add(item.nome);
 
     receita.push({
       nome: item.nome,
-      preco: 0,
+      preco: Number(precosSalvos[item.nome] || 0),
       quantidade: 0,
       unidade: "kg"
     });
@@ -68,40 +83,59 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIngredientes();
   }
 
-  // ================= TABELA =================
-
+  // ===== TABELA + CÁLCULO =====
   function atualizarTabela() {
     tabelaReceita.innerHTML = "";
     let total = 0;
 
     receita.forEach((item, index) => {
-      const custo = item.preco * item.quantidade;
+      const preco = Number(item.preco);
+      const quantidade = Number(item.quantidade);
+      const custo = preco * quantidade;
+
       total += custo;
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${item.nome}</td>
-        <td><input type="number" step="0.01" value="${item.preco}"
-          onchange="receita[${index}].preco = Number(this.value); atualizarTabela();"></td>
-        <td><input type="number" step="0.01" value="${item.quantidade}"
-          onchange="receita[${index}].quantidade = Number(this.value); atualizarTabela();"></td>
+
+        <td>
+          <input type="number" step="0.01" value="${preco}"
+            onchange="
+              receita[${index}].preco = Number(this.value);
+              precosSalvos['${item.nome}'] = Number(this.value);
+              salvarPrecos(precosSalvos);
+              atualizarTabela();
+            ">
+        </td>
+
+        <td>
+          <input type="number" step="0.01" value="${quantidade}"
+            onchange="
+              receita[${index}].quantidade = Number(this.value);
+              atualizarTabela();
+            ">
+        </td>
+
         <td>
           <select onchange="receita[${index}].unidade = this.value">
             ${unidades.map(u => `<option ${u === item.unidade ? "selected" : ""}>${u}</option>`).join("")}
           </select>
         </td>
-        <td>R$ ${custo.toFixed(2)}</td>
-        <td><button onclick="removerIngrediente(${index})">❌</button></td>
-      `;
 
+        <td>R$ ${custo.toFixed(2)}</td>
+
+        <td>
+          <button onclick="removerIngrediente(${index})">❌</button>
+        </td>
+      `;
       tabelaReceita.appendChild(tr);
     });
 
     totalSpan.textContent = total.toFixed(2);
   }
 
-  // ================= FUNÇÕES GLOBAIS =================
-
+  // ===== REMOVER =====
   window.removerIngrediente = function (index) {
     ingredientesNaReceita.delete(receita[index].nome);
     receita.splice(index, 1);
@@ -109,6 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIngredientes();
   };
 
+  // ===== SALVAR RECEITA =====
   window.salvarReceita = function () {
     if (receita.length === 0) {
       alert("A receita está vazia.");
@@ -119,18 +154,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!nome) return;
 
     const receitas = carregarReceitas();
+
     receitas.push({
       nome,
-      itens: receita,
+      itens: JSON.parse(JSON.stringify(receita)),
       total: totalSpan.textContent
     });
 
     salvarReceitas(receitas);
     renderReceitas();
-    alert("Receita salva!");
+
+    alert("Receita salva com sucesso!");
   };
 
-  window.renderReceitas = function () {
+  // ===== LISTAR RECEITAS =====
+  function renderReceitas() {
     listaReceitas.innerHTML = "";
     const receitas = carregarReceitas();
 
@@ -148,16 +186,26 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       listaReceitas.appendChild(li);
     });
-  };
+  }
 
+  // ===== ABRIR =====
   window.abrirReceita = function (index) {
     const receitas = carregarReceitas();
-    receita = receitas[index].itens;
-    ingredientesNaReceita = new Set(receita.map(i => i.nome));
+    const r = receitas[index];
+
+    receita = [];
+    ingredientesNaReceita.clear();
+
+    r.itens.forEach(item => {
+      ingredientesNaReceita.add(item.nome);
+      receita.push(item);
+    });
+
     atualizarTabela();
     renderIngredientes();
   };
 
+  // ===== EXCLUIR =====
   window.excluirReceita = function (index) {
     const receitas = carregarReceitas();
     receitas.splice(index, 1);
