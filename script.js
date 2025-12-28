@@ -6,34 +6,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const unidades = ["kg", "g", "litro", "ml", "unidade"];
 
-  // ===== PREÇOS SALVOS =====
-  function carregarPrecosSalvos() {
+  /* ===== PREÇOS ===== */
+  function carregarPrecos() {
     return JSON.parse(localStorage.getItem("precosIngredientes")) || {};
   }
-
   function salvarPrecos(precos) {
     localStorage.setItem("precosIngredientes", JSON.stringify(precos));
   }
+  let precosSalvos = carregarPrecos();
 
-  let precosSalvos = carregarPrecosSalvos();
-
-  // ===== RECEITAS SALVAS =====
+  /* ===== RECEITAS ===== */
   function carregarReceitas() {
     return JSON.parse(localStorage.getItem("receitasSalvas")) || [];
   }
-
   function salvarReceitas(lista) {
     localStorage.setItem("receitasSalvas", JSON.stringify(lista));
   }
 
-  // ===== ELEMENTOS =====
+  /* ===== ELEMENTOS ===== */
   const campoBusca = document.getElementById("busca");
   const listaIngredientes = document.getElementById("lista-ingredientes");
   const tabelaReceita = document.getElementById("receita");
   const totalSpan = document.getElementById("total");
   const listaReceitas = document.getElementById("lista-receitas");
 
-  // ===== CARREGAR INGREDIENTES =====
+  /* ===== INGREDIENTES ===== */
   fetch("ingredientes.json")
     .then(res => res.json())
     .then(dados => {
@@ -44,7 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   campoBusca.addEventListener("input", renderIngredientes);
 
-  // ===== LISTAR INGREDIENTES =====
   function renderIngredientes() {
     const filtro = campoBusca.value.toLowerCase();
     listaIngredientes.innerHTML = "";
@@ -57,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (ingredientesNaReceita.has(item.nome)) {
         li.style.opacity = "0.4";
-        li.style.pointerEvents = "none";
       } else {
         li.onclick = () => adicionarIngrediente(item);
       }
@@ -66,7 +61,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== ADICIONAR =====
   function adicionarIngrediente(item) {
     if (ingredientesNaReceita.has(item.nome)) return;
 
@@ -74,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     receita.push({
       nome: item.nome,
-      preco: Number(precosSalvos[item.nome] || 0),
+      preco: Number(precosSalvos[item.nome]) || 0,
       quantidade: 0,
       unidade: "kg"
     });
@@ -83,16 +77,13 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIngredientes();
   }
 
-  // ===== TABELA + CÁLCULO =====
+  /* ===== TABELA ===== */
   function atualizarTabela() {
     tabelaReceita.innerHTML = "";
     let total = 0;
 
     receita.forEach((item, index) => {
-      const preco = Number(item.preco);
-      const quantidade = Number(item.quantidade);
-      const custo = preco * quantidade;
-
+      const custo = item.preco * item.quantidade;
       total += custo;
 
       const tr = document.createElement("tr");
@@ -100,25 +91,27 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${item.nome}</td>
 
         <td>
-          <input type="number" step="0.01" value="${preco}"
-            onchange="
+          <input type="number" value="${item.preco}" step="0.01"
+            oninput="
               receita[${index}].preco = Number(this.value);
               precosSalvos['${item.nome}'] = Number(this.value);
-              salvarPrecos(precosSalvos);
+              localStorage.setItem('precosIngredientes', JSON.stringify(precosSalvos));
               atualizarTabela();
             ">
         </td>
 
         <td>
-          <input type="number" step="0.01" value="${quantidade}"
-            onchange="
+          <input type="number" value="${item.quantidade}" step="0.01"
+            oninput="
               receita[${index}].quantidade = Number(this.value);
               atualizarTabela();
             ">
         </td>
 
         <td>
-          <select onchange="receita[${index}].unidade = this.value">
+          <select onchange="
+            receita[${index}].unidade = this.value;
+          ">
             ${unidades.map(u => `<option ${u === item.unidade ? "selected" : ""}>${u}</option>`).join("")}
           </select>
         </td>
@@ -129,13 +122,14 @@ document.addEventListener("DOMContentLoaded", () => {
           <button onclick="removerIngrediente(${index})">❌</button>
         </td>
       `;
+
       tabelaReceita.appendChild(tr);
     });
 
     totalSpan.textContent = total.toFixed(2);
   }
 
-  // ===== REMOVER =====
+  /* ===== FUNÇÕES GLOBAIS ===== */
   window.removerIngrediente = function (index) {
     ingredientesNaReceita.delete(receita[index].nome);
     receita.splice(index, 1);
@@ -143,10 +137,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIngredientes();
   };
 
-  // ===== SALVAR RECEITA =====
   window.salvarReceita = function () {
     if (receita.length === 0) {
-      alert("A receita está vazia.");
+      alert("Receita vazia.");
       return;
     }
 
@@ -154,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!nome) return;
 
     const receitas = carregarReceitas();
-
     receitas.push({
       nome,
       itens: JSON.parse(JSON.stringify(receita)),
@@ -163,11 +155,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     salvarReceitas(receitas);
     renderReceitas();
-
-    alert("Receita salva com sucesso!");
+    alert("Receita salva!");
   };
 
-  // ===== LISTAR RECEITAS =====
   function renderReceitas() {
     listaReceitas.innerHTML = "";
     const receitas = carregarReceitas();
@@ -188,7 +178,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ===== ABRIR =====
   window.abrirReceita = function (index) {
     const receitas = carregarReceitas();
     const r = receitas[index];
@@ -205,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderIngredientes();
   };
 
-  // ===== EXCLUIR =====
   window.excluirReceita = function (index) {
     const receitas = carregarReceitas();
     receitas.splice(index, 1);
