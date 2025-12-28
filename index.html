@@ -1,22 +1,42 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Custo de Receitas</title>
-  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    input {
+      width: 80px;
+    }
+
+    button {
+      padding: 6px 10px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h1>Cálculo de Custo de Receitas</h1>
-
-  <!-- BUSCA -->
-  <input type="text" id="busca" placeholder="Pesquisar ingrediente">
-
-  <!-- LISTA DE INGREDIENTES -->
-  <ul id="lista-ingredientes"></ul>
-
-  <!-- RECEITA ATUAL -->
-  <h2>Receita</h2>
+  <h2>Cálculo de Custo de Receita</h2>
 
   <table>
     <thead>
@@ -24,27 +44,46 @@
         <th>Ingrediente</th>
         <th>Preço</th>
         <th>Quantidade</th>
-        <th>Unidade</th>
         <th>Custo</th>
-        <th>Ação</th>
       </tr>
     </thead>
-    <tbody id="receita"></tbody>
+
+    <tbody id="tabela">
+      <tr>
+        <td>Alho</td>
+        <td><input type="number" step="0.01" oninput="calcular()"></td>
+        <td><input type="number" step="0.01" oninput="calcular()"></td>
+        <td class="custo">R$ 0.00</td>
+      </tr>
+    </tbody>
   </table>
 
-  <h3>Total: R$ <span id="total">0.00</span></h3>
+  <h3>Total: <span id="total">R$ 0.00</span></h3>
 
-  <!-- AÇÕES -->
-  <button type="button" onclick="salvarReceita()">💾 Salvar Receita</button>
+  <script>
+    function calcular() {
+      let total = 0;
 
-  <!-- RECEITAS SALVAS -->
-  <div id="receitas-salvas">
-    <h2>Receitas Salvas</h2>
-    <ul id="lista-receitas"></ul>
-  </div>
+      const linhas = document.querySelectorAll("#tabela tr");
 
-  <!-- SCRIPT -->
-  <script src="script.js"></script>
+      linhas.forEach(linha => {
+        const precoInput = linha.querySelector("td:nth-child(2) input");
+        const qtdInput   = linha.querySelector("td:nth-child(3) input");
+        const custoTd    = linha.querySelector(".custo");
+
+        const preco = Number(precoInput.value) || 0;
+        const qtd   = Number(qtdInput.value) || 0;
+
+        const custo = preco * qtd;
+
+        custoTd.textContent = "R$ " + custo.toFixed(2);
+        total += custo;
+      });
+
+      document.getElementById("total").textContent =
+        "R$ " + total.toFixed(2);
+    }
+  </script>
 
 </body>
 </html>
