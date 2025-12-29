@@ -1,89 +1,139 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Custo de Receitas</title>
+<meta charset="UTF-8">
+<title>Custo de Receitas</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
 
-    input {
-      width: 80px;
-    }
+input {
+  width: 80px;
+}
 
-    button {
-      padding: 6px 10px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-  </style>
+button {
+  padding: 6px 10px;
+  margin-top: 10px;
+}
+
+.custo {
+  font-weight: bold;
+}
+</style>
 </head>
 
 <body>
 
-  <h2>Cálculo de Custo de Receita</h2>
+<h2>Cálculo de Custo de Receita</h2>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Ingrediente</th>
-        <th>Preço</th>
-        <th>Quantidade</th>
-        <th>Custo</th>
-      </tr>
-    </thead>
+<table id="tabela">
+  <thead>
+    <tr>
+      <th>Ingrediente</th>
+      <th>Preço</th>
+      <th>Quantidade</th>
+      <th>Custo</th>
+      <th>Ação</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><input placeholder="Ingrediente"></td>
+      <td><input type="number" step="0.01" oninput="calcular()"></td>
+      <td><input type="number" step="0.01" oninput="calcular()"></td>
+      <td class="custo">R$ 0.00</td>
+      <td><button onclick="removerLinha(this)">❌</button></td>
+    </tr>
+  </tbody>
+</table>
 
-    <tbody id="tabela">
-      <tr>
-        <td>Alho</td>
-        <td><input type="number" step="0.01" oninput="calcular()"></td>
-        <td><input type="number" step="0.01" oninput="calcular()"></td>
-        <td class="custo">R$ 0.00</td>
-      </tr>
-    </tbody>
-  </table>
+<button onclick="adicionarLinha()">➕ Adicionar Ingrediente</button>
 
-  <h3>Total: <span id="total">R$ 0.00</span></h3>
+<h3>Total: R$ <span id="total">0.00</span></h3>
 
-  <script>
-    function calcular() {
-      let total = 0;
+<button onclick="salvarReceita()">💾 Salvar Receita</button>
 
-      const linhas = document.querySelectorAll("#tabela tr");
+<h3>Receitas Salvas</h3>
+<ul id="listaReceitas"></ul>
 
-      linhas.forEach(linha => {
-        const precoInput = linha.querySelector("td:nth-child(2) input");
-        const qtdInput   = linha.querySelector("td:nth-child(3) input");
-        const custoTd    = linha.querySelector(".custo");
+<script>
+function calcular() {
+  let total = 0;
 
-        const preco = Number(precoInput.value) || 0;
-        const qtd   = Number(qtdInput.value) || 0;
+  document.querySelectorAll("#tabela tbody tr").forEach(linha => {
+    const preco = Number(linha.children[1].querySelector("input").value) || 0;
+    const qtd   = Number(linha.children[2].querySelector("input").value) || 0;
 
-        const custo = preco * qtd;
+    const custo = preco * qtd;
+    linha.querySelector(".custo").innerText = "R$ " + custo.toFixed(2);
+    total += custo;
+  });
 
-        custoTd.textContent = "R$ " + custo.toFixed(2);
-        total += custo;
-      });
+  document.getElementById("total").innerText = total.toFixed(2);
+}
 
-      document.getElementById("total").textContent =
-        "R$ " + total.toFixed(2);
-    }
-  </script>
+function adicionarLinha() {
+  const tbody = document.querySelector("#tabela tbody");
+  const tr = document.createElement("tr");
+
+  tr.innerHTML = `
+    <td><input placeholder="Ingrediente"></td>
+    <td><input type="number" step="0.01" oninput="calcular()"></td>
+    <td><input type="number" step="0.01" oninput="calcular()"></td>
+    <td class="custo">R$ 0.00</td>
+    <td><button onclick="removerLinha(this)">❌</button></td>
+  `;
+
+  tbody.appendChild(tr);
+}
+
+function removerLinha(botao) {
+  botao.parentElement.parentElement.remove();
+  calcular();
+}
+
+function salvarReceita() {
+  const nome = prompt("Nome da receita:");
+  if (!nome) return;
+
+  const total = document.getElementById("total").innerText;
+
+  const receitas = JSON.parse(localStorage.getItem("receitas")) || [];
+  receitas.push({ nome, total });
+
+  localStorage.setItem("receitas", JSON.stringify(receitas));
+  listarReceitas();
+}
+
+function listarReceitas() {
+  const lista = document.getElementById("listaReceitas");
+  lista.innerHTML = "";
+
+  const receitas = JSON.parse(localStorage.getItem("receitas")) || [];
+
+  receitas.forEach(r => {
+    const li = document.createElement("li");
+    li.innerText = `${r.nome} — R$ ${r.total}`;
+    lista.appendChild(li);
+  });
+}
+
+listarReceitas();
+</script>
 
 </body>
 </html>
